@@ -1,4 +1,33 @@
 PipelineSecrets: {}
+keycloak-http:
+  official-keycloak:
+    keycloak:
+      extraContainers: |
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command:
+            - /cloud_sql_proxy
+          args:
+            - -instances=simple-step-project:northamerica-northeast1:keycloak-pg11-jx-staging=tcp:5432
+            - -credential_file=/secrets/cloudsql/credentials.json
+          volumeMounts:
+            - name: cloudsql-creds
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      extraVolumes: |
+        - name: theme
+          emptyDir: {}
+        - name: realm-secret-volume
+          secret:
+            secretName: realm-secret
+        - name: cloudsql-creds
+          secret:
+            secretName: cloudsql-instance-credentials
+      persistence:
+        dbHost: 127.0.0.1
+keycloak:
+  cloudsql:
+    disabled: false
 cleanup:
   Annotations:
     helm.sh/hook: pre-delete
